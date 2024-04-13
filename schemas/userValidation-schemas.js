@@ -17,6 +17,24 @@ const createUserSchema = {
   },
 };
 
+const updatePasswordSchema = {
+  password: {
+    type: "string",
+    custom: (v, errors) => {
+      if (!/[0-9]/.test(v)) errors.push({ type: "atLeastOneDigit" });
+      if (!/[a-zA-Z]/.test(v)) errors.push({ type: "atLeastOneLetter" });
+      return v;
+    },
+    min: 8,
+    max: 400,
+    messages: {
+      stringPattern: "password value must contain a digit",
+      stringMin: "Your password value is too short.",
+      stringMax: "Your password value is too large.",
+    },
+  },
+};
+
 const userAddressUpdateSchema = {
   phoneNumber: {
     type: "string",
@@ -36,4 +54,8 @@ const userAddressUpdateSchema = {
   },
 };
 
-module.exports = { createUserSchema, userAddressUpdateSchema };
+module.exports = {
+  createUserSchema,
+  userAddressUpdateSchema,
+  updatePasswordSchema,
+};

@@ -26,7 +26,19 @@ module.exports = {
         allowNull: false,
       },
       img: {
-        type: Sequelize.BLOB,
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      options: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      shortDesc: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      longDesc: {
+        type: Sequelize.TEXT,
         allowNull: false,
       },
       createdAt: {

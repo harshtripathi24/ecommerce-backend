@@ -17,6 +17,9 @@ module.exports = {
       password: {
         type: Sequelize.STRING,
       },
+      isAdmin: {
+        type: Sequelize.BOOLEAN,
+      },
       phoneNumber: {
         type: Sequelize.BIGINT,
         allowNull: true,

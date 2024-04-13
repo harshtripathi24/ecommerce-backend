@@ -14,9 +14,10 @@ const jsonwebtoken = require("jsonwebtoken");
 const {
   createUserSchema,
   userAddressUpdateSchema,
+  updatePasswordSchema,
 } = require("../schemas/userValidation-schemas");
 
-//TODO: Have to Store Password in Hashed Value in Database
+//==========================Imports Ends =========================
 
 //==============User SignUp / Create User Function ========================================
 const createUser = async (req, res, next) => {
@@ -28,6 +29,7 @@ const createUser = async (req, res, next) => {
     const user = {
       email: req.body.email,
       password: req.body.password,
+      isAdmin: false,
     };
 
     //validator Constructor
@@ -74,6 +76,7 @@ const createUser = async (req, res, next) => {
             const userHashed = {
               email: req.body.email,
               password: hashPassword,
+              isAdmin: false,
             };
 
             await models.Users.create(userHashed).then((result) => {
@@ -94,6 +97,7 @@ const createUser = async (req, res, next) => {
 
 //========================User Login Functions =============================
 
+//TODO: Update and see if you can put more data in use token and can use it for
 const userLogin = async (req, res, next) => {
   try {
     await models.Users.findOne({
@@ -101,7 +105,7 @@ const userLogin = async (req, res, next) => {
     }).then((user) => {
       if (user === null) {
         const err = new HttpError(
-          "User Credentials Filed User Email Doesn't Exist",
+          "User Credentials Failed User Email Doesn't Exist",
           409
         );
         return next(err);
@@ -112,14 +116,14 @@ const userLogin = async (req, res, next) => {
               {
                 id: user.id,
                 email: user.email,
+                isAdmin: user.isAdmin,
               },
-              "something something",
+              process.env.JWT_SECRET,
               {
                 expiresIn: 86400, // expires in 24 hours
               },
 
               (err, token) => {
-                console.log(token);
                 res.status(200).json({
                   message: "User Logged In Successfully",
                   token: token,
@@ -129,7 +133,7 @@ const userLogin = async (req, res, next) => {
             );
           } else {
             const err = new HttpError(
-              "User Credentials Filed User Password Didn't Matched",
+              "User Credentials Failed User Password Didn't Matched",
               409
             );
             return next(err);
@@ -143,13 +147,24 @@ const userLogin = async (req, res, next) => {
   }
 };
 
-// Show Single User
-const showUser = async (req, res) => {
+//==================== Show Single User Function================================================================
+
+const showUser = async (req, res, next) => {
   try {
     const uid = req.params.uid;
 
     await models.Users.findByPk(uid).then((result) => {
-      res.status(200).json(result);
+      if (result) {
+        if (String(req.userData.id) === uid) {
+          res.status(200).json(result);
+        } else {
+          const err = new HttpError("Forbidden Resource", 403);
+          return next(err);
+        }
+      } else {
+        const err = new HttpError("User Not Found", 404);
+        return next(err);
+      }
     });
   } catch (error) {
     const err = new HttpError("Something Went Wrong", 500);
@@ -157,41 +172,117 @@ const showUser = async (req, res) => {
   }
 };
 
-//Show all User
-const showAllUsers = async (req, res) => {
+//=====================Show all User================================================================
+
+const showAllUsers = async (req, res, next) => {
   try {
-    await models.Users.findAll().then((result) => {
-      res.status(200).json(result);
-    });
+    if (req.userData.isAdmin) {
+      await models.Users.findAll().then((result) => {
+        res.status(200).json(result);
+      });
+    } else {
+      const err = new HttpError("Forbidden Resource", 403);
+      return next(err);
+    }
   } catch (error) {
     const err = new HttpError("Something Went Wrong", 500);
     return next(err);
   }
 };
 
-//User Update Address Method
+//======================User Update Address Method===========================
 const updateUserAddress = async (req, res, next) => {
   try {
     const uid = req.params.uid;
 
-    const userAddressData = {
-      phoneNumber: req.body.phoneNumber,
-      address: req.body.address,
-      city: req.body.city,
-      state: req.body.state,
-      pincode: req.body.pincode,
+    const userExist = await models.Users.findByPk(uid);
+    if (!userExist) {
+      const err = new HttpError("User Not Found", 404);
+      return next(err);
+    } else {
+      const userAddressData = {
+        phoneNumber: req.body.phoneNumber,
+        address: req.body.address,
+        city: req.body.city,
+        state: req.body.state,
+        pincode: req.body.pincode,
+      };
+
+      if (uid !== String(req.userData.id)) {
+        const err = new HttpError(
+          "Forbidden Resource Can't Update other user's Info",
+          403
+        );
+        return next(err);
+      } else {
+        const v = new Validator();
+
+        const validationResponse = v.validate(
+          userAddressData,
+          userAddressUpdateSchema
+        );
+
+        if (validationResponse !== true) {
+          let errorMessage = "";
+
+          validationResponse.map((validationFailed) => {
+            errorMessage = errorMessage + validationFailed.message + ` `;
+          });
+
+          const err = new HttpError(
+            "Validation Failed Because of " + errorMessage,
+            400
+          );
+          return next(err);
+        }
+
+        await models.Users.update(userAddressData, { where: { id: uid } }).then(
+          (result) => {
+            res.status(200).json({
+              message: "User Address Updated Successfully",
+              user: result,
+            });
+          }
+        );
+      }
+    }
+  } catch (error) {
+    const err = new HttpError("Something Went Wrong", 500);
+    return next(err);
+  }
+};
+
+//=====================Update User Password Method===========================
+
+const updateUserPassword = async (req, res, next) => {
+  try {
+    const uid = req.params.uid;
+
+    const userData = {
+      oldUserPass: req.body.oldPassword,
+      password: req.body.newPassword,
     };
 
-    console.log(userAddressData.phoneNumber);
+    const v = new Validator({
+      useNewCustomCheckerFunction: true, // using new version
+      messages: {
+        // Register our new error message text
+        atLeastOneLetter:
+          "The password value must contain at least one letter from a-z and A-Z ranges!",
+        atLeastOneDigit:
+          "The password value must contain at least one digit from 0 to 9!",
+      },
+    });
 
-    const v = new Validator();
+    const validationResponse = v.validate(userData, updatePasswordSchema);
 
-    const validationResponse = v.validate(
-      userAddressData,
-      userAddressUpdateSchema
-    );
-
-    if (validationResponse !== true) {
+    if (uid !== String(req.userData.id)) {
+      const err = new HttpError(
+        "Forbidden Resource Can't Update other user's Info",
+        403
+      );
+      return next(err);
+    } else if (validationResponse !== true) {
       let errorMessage = "";
 
       validationResponse.map((validationFailed) => {
@@ -203,40 +294,49 @@ const updateUserAddress = async (req, res, next) => {
         400
       );
       return next(err);
-    }
+    } else {
+      const user = await models.Users.findByPk(uid);
 
-    await models.Users.update(userAddressData, { where: { id: uid } }).then(
-      (result) => {
-        console.log(userAddressData.phoneNumber);
-        res.status(200).json({
-          message: "User Address Updated Successfully",
-          user: result,
+      if (user) {
+        await bcrypt.genSalt(12, async (err, salt) => {
+          await bcrypt.hash(
+            userData.password,
+            salt,
+            async (err, hashedPassword) => {
+              bcrypt.compare(
+                userData.oldUserPass,
+                user.password,
+                async (err, result) => {
+                  if (result) {
+                    const passwordData = {
+                      password: hashedPassword,
+                    };
+
+                    await models.Users.update(passwordData, {
+                      where: { id: uid },
+                    }).then((result) => {
+                      res.status(200).json({
+                        message: "User's Password Updated Successfully",
+                        user: result,
+                      });
+                    });
+                  } else {
+                    const err = new HttpError(
+                      "User Credentials Failed User Password Didn't Matched",
+                      409
+                    );
+                    return next(err);
+                  }
+                }
+              );
+            }
+          );
         });
+      } else {
+        const err = new HttpError("User Not Found", 404);
+        return next(err);
       }
-    );
-  } catch (error) {
-    const err = new HttpError("Something Went Wrong", 500);
-    return next(err);
-  }
-};
-
-const updateUserPassword = async (req, res) => {
-  try {
-    const oldUserPass = req.body.oldPassword;
-    const uid = req.params.uid;
-
-    const userData = {
-      password: req.body.newPassword,
-    };
-
-    await models.Users.update(userData, {
-      where: { id: uid, password: oldUserPass },
-    }).then((result) => {
-      res.status(200).json({
-        message: "User's Password Updated Successfully",
-        user: result,
-      });
-    });
+    }
   } catch (error) {
     return res.status(400).json({
       message: "Something went wrong",
@@ -245,6 +345,29 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
+//======================Make User Admin Method================
+
+const makeUserAdmin = async (req, res, next) => {
+  const uid = req.body.id;
+
+  const userExist = await models.Users.findByPk(uid);
+  if (!userExist) {
+    const err = new HttpError("User Not Found", 404);
+    return next(err);
+  } else {
+    await models.Users.update({ isAdmin: true }, { where: { id: uid } }).then(
+      (result) => {
+        res.status(200).json({
+          message: "User Role Been Updated to Admin",
+          user: result,
+        });
+      }
+    );
+  }
+};
+
+//=======================End Of Methods=========================================
+
 module.exports = {
   createUser,
   showUser,
@@ -252,4 +375,6 @@ module.exports = {
   updateUserAddress,
   updateUserPassword,
   userLogin,
+  updateUserPassword,
+  makeUserAdmin,
 };
