@@ -8,6 +8,8 @@ const HttpError = require("../Utils/http-error");
 const models = require("../models");
 const { where } = require("sequelize");
 
+//===============Upload/Create Image Methods================================
+
 const upload = async (req, res, next) => {
   try {
     const imageSchema = {
@@ -59,6 +61,8 @@ const upload = async (req, res, next) => {
     return next(err);
   }
 };
+
+//==============Delete Image Method================================================
 
 const deleteImage = async (req, res, next) => {
   try {

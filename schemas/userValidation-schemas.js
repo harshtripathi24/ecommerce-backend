@@ -1,4 +1,5 @@
 const createUserSchema = {
+  name: { type: "string", optional: false, min: 3, max: 320 },
   email: { type: "email", optional: false, min: 3, max: 320 },
   password: {
     type: "string",

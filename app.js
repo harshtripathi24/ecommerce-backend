@@ -8,6 +8,10 @@ const path = require("path");
 const userRoutes = require("./routes/user-routes");
 const imageRoutes = require("./routes/image-routes");
 const productRoutes = require("./routes/product-routes");
+const tagRoutes = require("./routes/tag-routes");
+const cartItemRoutes = require("./routes/cartItem-routes");
+const wishItemRoutes = require("./routes/wishItem-routes");
+const reviewRoutes = require("./routes/review-routes");
 
 const HttpError = require("./Utils/http-error");
 const bodyparser = require("body-parser");
@@ -31,6 +35,18 @@ app.use("/api/product-images", imageRoutes);
 //Product Routes
 
 app.use("/api/products", productRoutes);
+
+//Tag Routes
+app.use("/api/tags", tagRoutes);
+
+//Cart Item Routes
+app.use("/api/cartList", cartItemRoutes);
+
+//Wish Item Routes
+app.use("/api/wishList", wishItemRoutes);
+
+//Review Routes
+app.use("/api/reviews", reviewRoutes);
 
 //Invalidating Routes Handler
 app.use((req, res, next) => {

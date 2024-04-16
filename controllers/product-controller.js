@@ -80,8 +80,10 @@ const createProduct = async (req, res, next) => {
 const showProduct = async (req, res, next) => {
   try {
     const pid = req.params.pid;
-
-    await models.Products.findByPk(pid).then((result) => {
+    // ALso giving all the associated image
+    await models.Products.findByPk(pid, {
+      include: [models.Images, models.Reviews, models.Tags],
+    }).then((result) => {
       if (result) {
         res.status(200).json(result);
       } else {
@@ -90,7 +92,7 @@ const showProduct = async (req, res, next) => {
       }
     });
   } catch (error) {
-    const err = new HttpError("Something Went Wrong" + error, 500);
+    const err = new HttpError("Something Went Wrong: " + error, 500);
     return next(err);
   }
 };

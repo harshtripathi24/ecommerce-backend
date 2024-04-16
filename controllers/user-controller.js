@@ -27,6 +27,7 @@ const createUser = async (req, res, next) => {
     });
 
     const user = {
+      name: req.body.name,
       email: req.body.email,
       password: req.body.password,
       isAdmin: false,
@@ -74,6 +75,7 @@ const createUser = async (req, res, next) => {
           salt,
           async (err, hashPassword) => {
             const userHashed = {
+              name: req.body.name,
               email: req.body.email,
               password: hashPassword,
               isAdmin: false,
@@ -90,14 +92,12 @@ const createUser = async (req, res, next) => {
       });
     }
   } catch (error) {
-    const err = new HttpError("Something Went Wrong", 500);
+    const err = new HttpError("Something Went Wrong" + error, 500);
     return next(err);
   }
 };
 
 //========================User Login Functions =============================
-
-//TODO: Update and see if you can put more data in use token and can use it for
 const userLogin = async (req, res, next) => {
   try {
     await models.Users.findOne({
@@ -167,7 +167,7 @@ const showUser = async (req, res, next) => {
       }
     });
   } catch (error) {
-    const err = new HttpError("Something Went Wrong", 500);
+    const err = new HttpError("Something Went Wrong" + error, 500);
     return next(err);
   }
 };
@@ -247,7 +247,7 @@ const updateUserAddress = async (req, res, next) => {
       }
     }
   } catch (error) {
-    const err = new HttpError("Something Went Wrong", 500);
+    const err = new HttpError("Something Went Wrong" + error, 500);
     return next(err);
   }
 };
