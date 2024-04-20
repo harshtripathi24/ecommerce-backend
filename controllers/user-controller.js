@@ -1,4 +1,4 @@
-const { where } = require("sequelize");
+const { where, Model } = require("sequelize");
 
 const Validator = require("fastest-validator");
 const models = require("../models");
@@ -153,7 +153,79 @@ const showUser = async (req, res, next) => {
   try {
     const uid = req.params.uid;
 
-    await models.Users.findByPk(uid).then((result) => {
+    await models.Users.findByPk(uid, {
+      include: [
+        {
+          model: models.WishList,
+          attributes: [
+            "createdAt",
+            "updatedAt" /* add more attributes as needed */,
+          ],
+          include: {
+            model: models.Products,
+            attributes: [
+              "id",
+              "name",
+              "author",
+              "price",
+              "fakePrice",
+              "img",
+              "createdAt",
+              "updatedAt" /* add more attributes as needed */,
+            ],
+          },
+        },
+        {
+          model: models.CartList,
+          attributes: [
+            "createdAt",
+            "updatedAt" /* add more attributes as needed */,
+          ],
+          include: {
+            model: models.Products,
+            attributes: [
+              "id",
+              "name",
+              "author",
+              "price",
+              "fakePrice",
+              "img",
+              "createdAt",
+              "updatedAt" /* add more attributes as needed */,
+            ],
+          },
+        },
+        {
+          model: models.Orders,
+          attributes: [
+            "pid",
+            "price",
+            "quantity",
+            "phoneNumber",
+            "address",
+            "pincode",
+            "city",
+            "state",
+            "status",
+            "createdAt",
+            "updatedAt",
+          ],
+          include: {
+            model: models.Products,
+            attributes: [
+              "id",
+              "name",
+              "author",
+              "price",
+              "fakePrice",
+              "img",
+              "createdAt",
+              "updatedAt" /* add more attributes as needed */,
+            ],
+          },
+        },
+      ],
+    }).then((result) => {
       if (result) {
         if (String(req.userData.id) === uid) {
           res.status(200).json(result);

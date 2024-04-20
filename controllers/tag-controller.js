@@ -70,6 +70,8 @@ const showProductByTagName = async (req, res, next) => {
     next(err);
   }
 };
+
+//===================Delete Tag Method====================================================
 const deleteTag = async (req, res, next) => {
   try {
     const tId = req.params.tId;

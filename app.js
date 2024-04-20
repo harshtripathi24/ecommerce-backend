@@ -12,6 +12,7 @@ const tagRoutes = require("./routes/tag-routes");
 const cartItemRoutes = require("./routes/cartItem-routes");
 const wishItemRoutes = require("./routes/wishItem-routes");
 const reviewRoutes = require("./routes/review-routes");
+const orderRoutes = require("./routes/order-routes");
 
 const HttpError = require("./Utils/http-error");
 const bodyparser = require("body-parser");
@@ -47,6 +48,9 @@ app.use("/api/wishList", wishItemRoutes);
 
 //Review Routes
 app.use("/api/reviews", reviewRoutes);
+
+//Order Routes
+app.use("/api/orders", orderRoutes);
 
 //Invalidating Routes Handler
 app.use((req, res, next) => {
