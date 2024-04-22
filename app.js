@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 
+require("dotenv").config();
 const path = require("path");
 
 //Importing Routes
@@ -16,10 +17,22 @@ const orderRoutes = require("./routes/order-routes");
 
 const HttpError = require("./Utils/http-error");
 const bodyparser = require("body-parser");
-require("dotenv").config();
 
 // Using Middlewares
 app.use(bodyparser.json());
+
+//Middleware for Handling CORS Error in Frontend
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Orgin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE");
+  next();
+});
 
 //Public Route
 app.use(

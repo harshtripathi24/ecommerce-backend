@@ -21,7 +21,7 @@ const checkToUpload = (req, res, next) => {
 
 //Product Routes
 
-router.get("/show/:pid", checkAuth, productController.showProduct);
+router.get("/show/:pid", productController.showProduct);
 
 router.get(
   "/show-all",

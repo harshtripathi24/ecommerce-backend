@@ -12,6 +12,6 @@ router.post("/add-tag", checkAuth, checkAdmin, tagController.createTag);
 
 router.delete("/delete/:tId", checkAuth, checkAdmin, tagController.deleteTag);
 
-router.get("/show-tag", tagController.showProductByTagName);
+router.post("/show-tag", tagController.showProductByTagName);
 
 module.exports = router;
