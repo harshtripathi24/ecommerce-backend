@@ -57,7 +57,7 @@ const showProductByTagName = async (req, res, next) => {
       where: { tagName: tag },
       include: [models.Products],
     }).then((tag) => {
-      if (tag) {
+      if (tag.length > 0) {
         res.status(200).json(tag);
       } else {
         const err = new HttpError("Tag Not Found", 404);
