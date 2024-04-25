@@ -12,12 +12,14 @@ const createCartItem = async (req, res, next) => {
       pid: { type: "number", optional: false, min: 1, max: 1000 },
       uid: { type: "number", optional: false, min: 1, max: 1000 },
       quantity: { type: "number", optional: false, min: 1, max: 10 },
+      optionChosen: { type: "string", optional: false, min: 3, max: 100 },
     };
 
     const cartItem = {
       pid: req.body.pid,
       uid: req.body.uid,
       quantity: req.body.quantity,
+      optionChosen: req.body.optionChosen,
     };
 
     const authId = req.userData.id;

@@ -102,6 +102,83 @@ const userLogin = async (req, res, next) => {
   try {
     await models.Users.findOne({
       where: { email: req.body.email },
+      include: [
+        {
+          model: models.WishList,
+          attributes: [
+            "createdAt",
+            "updatedAt",
+            "quantity",
+            "id",
+            "optionChosen" /* add more attributes as needed */,
+          ],
+          include: {
+            model: models.Products,
+            attributes: [
+              "id",
+              "name",
+              "author",
+              "price",
+              "fakePrice",
+              "img",
+              "createdAt",
+              "updatedAt" /* add more attributes as needed */,
+            ],
+          },
+        },
+        {
+          model: models.CartList,
+          attributes: [
+            "createdAt",
+            "updatedAt" /* add more attributes as needed */,
+            "id",
+            "quantity",
+            "optionChosen",
+          ],
+          include: {
+            model: models.Products,
+            attributes: [
+              "id",
+              "name",
+              "author",
+              "price",
+              "fakePrice",
+              "img",
+              "createdAt",
+              "updatedAt" /* add more attributes as needed */,
+            ],
+          },
+        },
+        {
+          model: models.Orders,
+          attributes: [
+            "pid",
+            "price",
+            "quantity",
+            "phoneNumber",
+            "address",
+            "pincode",
+            "city",
+            "state",
+            "status",
+            "createdAt",
+            "updatedAt",
+          ],
+          include: {
+            model: models.Products,
+            attributes: [
+              "id",
+              "name",
+              "author",
+              "price",
+              "fakePrice",
+              "img",
+              "createdAt",
+              "updatedAt" /* add more attributes as needed */,
+            ],
+          },
+        },
+      ],
     }).then((user) => {
       if (user === null) {
         const err = new HttpError(
@@ -124,10 +201,12 @@ const userLogin = async (req, res, next) => {
               },
 
               (err, token) => {
+                const { password, ...userWithoutPassword } = user.toJSON();
+
                 res.status(200).json({
                   message: "User Logged In Successfully",
                   token: token,
-                  user: user,
+                  user: userWithoutPassword,
                 });
               }
             );
@@ -159,7 +238,10 @@ const showUser = async (req, res, next) => {
           model: models.WishList,
           attributes: [
             "createdAt",
-            "updatedAt" /* add more attributes as needed */,
+            "updatedAt",
+            "quantity",
+            "id",
+            "optionChosen" /* add more attributes as needed */,
           ],
           include: {
             model: models.Products,
@@ -180,6 +262,9 @@ const showUser = async (req, res, next) => {
           attributes: [
             "createdAt",
             "updatedAt" /* add more attributes as needed */,
+            "id",
+            "quantity",
+            "optionChosen",
           ],
           include: {
             model: models.Products,
@@ -228,7 +313,12 @@ const showUser = async (req, res, next) => {
     }).then((result) => {
       if (result) {
         if (String(req.userData.id) === uid) {
-          res.status(200).json(result);
+          const { password, ...userWithoutPassword } = result.toJSON();
+
+          res.status(200).json({
+            message: "User Found",
+            user: userWithoutPassword,
+          });
         } else {
           const err = new HttpError("Forbidden Resource", 403);
           return next(err);
