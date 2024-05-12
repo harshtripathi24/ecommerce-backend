@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const HttpError = require("../Utils/http-error");
+const { Op, col } = require("sequelize");
 
 const Validator = require("fastest-validator");
 const models = require("../models");
@@ -114,7 +115,7 @@ const showAllProducts = async (req, res, next) => {
 
 const updateProduct = async (req, res, next) => {
   try {
-    const pid = req.params.pid;
+    const searchTerm = req.body.searchTerm;
 
     const productExist = await models.Products.findByPk(pid);
     if (!productExist) {
@@ -212,6 +213,71 @@ const updateProduct = async (req, res, next) => {
   }
 };
 
+//========================Product Search Controller =========================================================================================
+
+const searchProduct = async (req, res, next) => {
+  try {
+    const searchTerm = req.body.searchTerm;
+
+    const searchQuery = {
+      where: {
+        [Op.or]: [
+          {
+            name: {
+              [Op.like]: `%${searchTerm}%`,
+            },
+          },
+          {
+            [Op.and]: [
+              {
+                "$tags.pid$": col("pid"),
+              },
+              {
+                "$tags.tagName$": {
+                  [Op.like]: `%${searchTerm}%`,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      include: [
+        {
+          model: models.Tags,
+          required: false,
+          attributes: ["tagName"],
+        },
+      ],
+    };
+
+    await models.Products.findAll(searchQuery)
+      .then((products) => {
+        if (products.length > 0) {
+          res.status(200).json({
+            message: "Products Found",
+            products: products,
+          });
+        } else {
+          const err = new HttpError("Product Not Found", 404);
+          return next(err);
+        }
+      })
+      .catch((error) => {
+        const err = new HttpError("Product Not Found" + error, 404);
+        return next(err);
+      });
+  } catch (error) {
+    const err = new HttpError("Product Not Found" + error, 404);
+    return next(err);
+  }
+};
+
 //TODO: Create a Delete Product that also delete the Entry form all table
 
-module.exports = { createProduct, showProduct, showAllProducts, updateProduct };
+module.exports = {
+  createProduct,
+  showProduct,
+  showAllProducts,
+  updateProduct,
+  searchProduct,
+};

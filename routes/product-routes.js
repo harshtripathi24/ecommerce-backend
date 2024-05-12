@@ -46,4 +46,6 @@ router.patch(
   productController.updateProduct
 );
 
+router.post("/search", productController.searchProduct);
+
 module.exports = router;
